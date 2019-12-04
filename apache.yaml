@@ -1,0 +1,14 @@
+---
+
+  - hosts: homologacao
+    gather_facts: false
+    tasks:
+      - ping:
+    
+      - name: Apache Start
+        become: true
+        service: name=httpd state=started
+      - name: Apache service enable
+        become: true
+        #service: name=httpd enable=yes
+        action: command /sbin/chkconfig httpd on
