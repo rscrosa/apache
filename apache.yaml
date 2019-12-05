@@ -1,14 +1,13 @@
 ---
 
   - hosts: homologacao
-    gather_facts: false
+    gather_facts: true
     tasks:
-      - ping:
-    
       - name: Apache Start
         become: true
         service: name=httpd state=started
-      - name: Apache service enable
+
+      - name: Apache service enable RHEL6
         become: true
-        #service: name=httpd enable=yes
         action: command /sbin/chkconfig httpd on
+        when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "6"
