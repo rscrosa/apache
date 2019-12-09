@@ -1,3 +1,6 @@
-[homologacao]
+[homologacao_rhel6]
 s01web113
 s01web114
+
+[homologacao_ihs]
+s01web14
