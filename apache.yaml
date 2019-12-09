@@ -111,18 +111,18 @@
             WantedBy=default.target
         when: stat_result_serv.stat.exists == false
 
-      - name: verifica se existe serviço IHS
-        systemd:
-          name: ihs
-        register: service_status
-
+      #- name: verifica se existe serviço IHS
+        #systemd:
+          #name: ihs
+        #register: service_status
+      - name: populate service facts
+        service_facts:
+      
       - name: habilita serviço IHS
         systemd:
           name: ihs
           enabled: yes
-        when: ansible_facts.services.ihs.service != enable
-      - name: populate service facts
-        service_facts:
-
+        when: ansible_facts.services["ihs.service"].status == "disabled"
       - debug:
-          #var: ansible_facts.services
+          var: ansible_facts.services["ihs.service"].status
+          
