@@ -17,112 +17,118 @@
     become: true
     become_method: dzdo
     tasks:
-      - name: verifica se o diretorio existe
-        stat: 
-          path: "/web/scripts/"
-        register: stat_dir
-
-      - name: cria diretorio
-        file:
-          path: "/web/scripts/"
-          state: directory
-          mode: 0775
-          owner: webadmin
-          group: servicos
-        when: stat_dir.stat.exists == false
-
-      - name: verifica se o arquivo de scrip existe
-        stat:
-          path: "/web/scripts/ihs.sh"
-        register: stat_result
-      - name: cria arquivo de script
-        file: 
-          path: "/web/scripts/ihs.sh"
-          state: touch
-          mode: 0775
-          owner: webadmin
-          group: servicos
-        when: stat_result.stat.exists == false
-      - name: copia conteudo
-        copy:
-          dest: "/web/scripts/ihs.sh"
-          content: |
-            #!/bin/bash
-            IHS_HOME=/web/IBM/HTTPServer
-
-            #======================================================================
-            start() {
-            echo "$0: starting IBM HTTP Server"
-            $IHS_HOME/bin/apachectl -k start -f $IHS_HOME/conf/httpd.conf
-            echo "IHS Startup completed"
-            }
-            #==============================================================================
-            stop() {
-            echo "$0: stopping IBM HTTP Server"
-            $IHS_HOME/bin/apachectl -k stop -f $IHS_HOME/conf/httpd.conf
-            echo "IHS Shutdown completed"
-            }
-
-            case $1 in
-            'start')
-            start
-            ;;
-            'stop')
-            stop
-            ;;
-            'restart')
-            stop
-            start
-            ;;
-            *)
-            echo "usage: $0 {start|stop|restart}"
-            ;;
-            esac
-        when: stat_result.stat.exists == false
-
-      ##### configuração do serviço #####
-      - name: verifica se o arquivo de serviço existe
-        stat:
-          path: "/etc/systemd/system/ihs.service"
-        register: stat_result_serv
-      - name: cria arquivo de servico
-        file: 
-          path: "/etc/systemd/system/ihs.service"
-          state: touch
-          mode: 0755
-          owner: root
-          group: root
-        when: stat_result_serv.stat.exists == false
-      - name: copia conteudo para arquivo de servico
-        copy:
-          dest: "/etc/systemd/system/ihs.service"
-          content: |
-            [Unit]
-            Description=IBM HTTP Server
-
-            [Service]
-            Type=oneshot
-            ExecStart=/web/scripts/ihs.sh start
-            ExecStop=/web/scripts/ihs.sh stop
-            User=root
-            RemainAfterExit=yes
-
-            [Install]
-            WantedBy=default.target
-        when: stat_result_serv.stat.exists == false
-
-      #- name: verifica se existe serviço IHS
-        #systemd:
-          #name: ihs
-        #register: service_status
-      - name: populate service facts
-        service_facts:
+      - service_facts:
+      - name: Colocar IHS como servico
       
-      - name: habilita serviço IHS
-        systemd:
-          name: ihs
-          enabled: yes
+        block:
+          - name: verifica se o diretorio existe
+            stat: 
+              path: "/web/scripts/"
+            register: stat_dir
+
+          - name: cria diretorio
+            file:
+              path: "/web/scripts/"
+              state: directory
+              mode: 0775
+              owner: webadmin
+              group: servicos
+            when: stat_dir.stat.exists == false
+
+          - name: verifica se o arquivo de scrip existe
+            stat:
+              path: "/web/scripts/ihs.sh"
+            register: stat_result
+          - name: cria arquivo de script
+            file: 
+              path: "/web/scripts/ihs.sh"
+              state: touch
+              mode: 0775
+              owner: webadmin
+              group: servicos
+            when: stat_result.stat.exists == false
+          - name: copia conteudo
+            copy:
+              dest: "/web/scripts/ihs.sh"
+              content: |
+                #!/bin/bash
+                IHS_HOME=/web/IBM/HTTPServer
+
+                #======================================================================
+                start() {
+                echo "$0: starting IBM HTTP Server"
+                $IHS_HOME/bin/apachectl -k start -f $IHS_HOME/conf/httpd.conf
+                echo "IHS Startup completed"
+                }
+                #==============================================================================
+                stop() {
+                echo "$0: stopping IBM HTTP Server"
+                $IHS_HOME/bin/apachectl -k stop -f $IHS_HOME/conf/httpd.conf
+                echo "IHS Shutdown completed"
+                }
+
+                case $1 in
+                'start')
+                start
+                ;;
+                'stop')
+                stop
+                ;;
+                'restart')
+                stop
+                start
+                ;;
+                *)
+                echo "usage: $0 {start|stop|restart}"
+                ;;
+                esac
+            when: stat_result.stat.exists == false
+
+          ##### configuração do serviço #####
+          - name: verifica se o arquivo de serviço existe
+            stat:
+              path: "/etc/systemd/system/ihs.service"
+            register: stat_result_serv
+          - name: cria arquivo de servico
+            file: 
+              path: "/etc/systemd/system/ihs.service"
+              state: touch
+              mode: 0755
+              owner: root
+              group: root
+            when: stat_result_serv.stat.exists == false
+          - name: copia conteudo para arquivo de servico
+            copy:
+              dest: "/etc/systemd/system/ihs.service"
+              content: |
+                [Unit]
+                Description=IBM HTTP Server
+
+                [Service]
+                Type=oneshot
+                ExecStart=/web/scripts/ihs.sh start
+                ExecStop=/web/scripts/ihs.sh stop
+                User=root
+                RemainAfterExit=yes
+
+                [Install]
+                WantedBy=default.target
+            when: stat_result_serv.stat.exists == false
+
+          #- name: verifica se existe serviço IHS
+            #systemd:
+              #name: ihs
+            #register: service_status
+          #- name: populate service facts
+          #  service_facts:
+            
+          
+          - name: habilita serviço IHS
+            systemd:
+              name: ihs
+              enabled: yes
+            when: ansible_facts.services["ihs.service"].status == "disabled"
+          #- debug:
+          #    var: ansible_facts.services["ihs.service"].status
         when: ansible_facts.services["ihs.service"].status == "disabled"
-      - debug:
-          var: ansible_facts.services["ihs.service"].status
           
